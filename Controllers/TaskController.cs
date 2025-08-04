@@ -9,7 +9,7 @@ using Taskify.Data;
 namespace Taskify.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/tasks")]
 [Authorize]
 
 public class TaskController: ControllerBase

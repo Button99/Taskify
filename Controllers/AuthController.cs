@@ -7,7 +7,7 @@ using Taskify.Services;
 using Taskify.DTOs;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth")]
 public class AuthController: ControllerBase
 {
     private readonly AuthService _authService;
@@ -32,7 +32,8 @@ public class AuthController: ControllerBase
         {
             Username = request.Username,
             PasswordHash = passwordHash,
-            PasswordSalt = passwordSalt
+            PasswordSalt = passwordSalt,
+            Email = request.Email
         };
 
         _db.Users.Add(user);
@@ -47,6 +48,9 @@ public class AuthController: ControllerBase
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
         if (user == null)
             return Unauthorized("Invalid username or password.");
+        Console.WriteLine($"Stored hash length: {user.PasswordHash.Length}");
+Console.WriteLine($"Stored salt length: {user.PasswordSalt.Length}");
+
         if (!_authService.VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
             return Unauthorized("Invalid username or password.");
         var token = _authService.CreateToken(user);

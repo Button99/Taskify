@@ -11,5 +11,5 @@ public class  TaskItem
     public TaskStatus Status { get; set; }
 
     public int UserId { get; set; }
-    public User User { get; set; }
+    public User? User { get; set; }
 }
