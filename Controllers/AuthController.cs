@@ -48,9 +48,6 @@ public class AuthController: ControllerBase
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
         if (user == null)
             return Unauthorized("Invalid username or password.");
-        Console.WriteLine($"Stored hash length: {user.PasswordHash.Length}");
-Console.WriteLine($"Stored salt length: {user.PasswordSalt.Length}");
-
         if (!_authService.VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
             return Unauthorized("Invalid username or password.");
         var token = _authService.CreateToken(user);

@@ -1,9 +1,9 @@
 
-const apiBase = "http://localhost:5054/api/tasks"; // Adjust to your actual backend
-
+const apiBase = "http://localhost:5054/api/tasks";
 const TaskStatus = ["Pending", "In Progress", "Completed", "Cancelled"];
-const TaskPriority = ["Low", "Normal", "High", "Urgent"];
 const tokenKey = "taskify_token";
+
+let editingTaskId = null;
 
 // Auth helpers
 function isLoggedIn() {
@@ -44,13 +44,10 @@ async function loadTasks() {
           <strong>${task.title}</strong><br/>
           <small>${task.description || ""}</small><br/>
           <small>Status: ${TaskStatus[task.status]}</small> | 
-          <small>Priority: ${TaskPriority[task.priority]}</small><br/>
           ${task.dueDate ? `<small>Due: ${task.dueDate.split("T")[0]}</small><br/>` : ""}
         </div>
         <div class="flex flex-col gap-1 items-end">
-          <button class="text-sm text-green-600" onclick="toggleStatus(${task.id}, ${task.status})">
-            ${task.status === 2 ? "Undo" : "Mark Done"}
-          </button>
+          <button class="text-sm text-blue-500" onclick='editTask(${task.id}, ${JSON.stringify(task)})'>✏️ Edit</button>
           <button class="text-sm text-red-500" onclick="deleteTask(${task.id})">🗑️</button>
         </div>
       </div>
@@ -60,7 +57,7 @@ async function loadTasks() {
   });
 }
 
-// Toggle task completion status
+// Toggle task status
 async function toggleStatus(id, currentStatus) {
   const newStatus = currentStatus === 2 ? 0 : 2;
   await fetch(`${apiBase}/${id}`, {
@@ -74,7 +71,7 @@ async function toggleStatus(id, currentStatus) {
   loadTasks();
 }
 
-// Delete a task
+// Delete task
 async function deleteTask(id) {
   await fetch(`${apiBase}/${id}`, {
     method: "DELETE",
@@ -83,7 +80,7 @@ async function deleteTask(id) {
   loadTasks();
 }
 
-// Handle task form submission
+// Handle add/update task
 document.getElementById("task-form").addEventListener("submit", async e => {
   e.preventDefault();
 
@@ -91,30 +88,58 @@ document.getElementById("task-form").addEventListener("submit", async e => {
   const description = document.getElementById("task-desc").value;
   const dueDate = document.getElementById("task-date").value;
   const status = parseInt(document.getElementById("task-status").value);
-  const priority = parseInt(document.getElementById("task-priority").value);
 
-  await fetch(apiBase, {
-    method: "POST",
-    headers: {
-      ...authHeader(),
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      title,
-      description,
-      dueDate: dueDate || null,
-      status,
-      priority
-    })
-  });
+  const payload = {
+    title,
+    description,
+    dueDate: dueDate || null,
+    status,
+  };
 
-  e.target.reset();
-  document.getElementById("task-priority").value = "1";
-  document.getElementById("task-status").value = "0";
+  if (editingTaskId) {
+    await fetch(`${apiBase}/${editingTaskId}`, {
+      method: "PUT",
+      headers: {
+        ...authHeader(),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+  } else {
+    await fetch(apiBase, {
+      method: "POST",
+      headers: {
+        ...authHeader(),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+  }
+
+  resetForm();
   loadTasks();
 });
 
-// Handle login
+// Reset form to add mode
+function resetForm() {
+  document.getElementById("task-form").reset();
+  document.getElementById("task-status").value = "0";
+  editingTaskId = null;
+  document.getElementById("task-form-btn").textContent = "Add Task";
+}
+
+// Edit task
+function editTask(id, task) {
+  document.getElementById("task-title").value = task.title;
+  document.getElementById("task-desc").value = task.description;
+  document.getElementById("task-date").value = task.dueDate ? task.dueDate.split("T")[0] : "";
+  document.getElementById("task-status").value = task.status;
+
+  editingTaskId = id;
+  document.getElementById("task-form-btn").textContent = "Update Task";
+}
+
+// Login
 document.getElementById("login-form").addEventListener("submit", async e => {
   e.preventDefault();
 
@@ -138,7 +163,7 @@ document.getElementById("login-form").addEventListener("submit", async e => {
   }
 });
 
-// Handle registration
+// Register
 document.getElementById("register-form").addEventListener("submit", async e => {
   e.preventDefault();
 
@@ -160,13 +185,12 @@ document.getElementById("register-form").addEventListener("submit", async e => {
   }
 });
 
-// Toggle between login/register
+// Toggle login/register
 document.getElementById("toggle-auth").addEventListener("click", () => {
   const loginVisible = !document.getElementById("login-form").classList.contains("hidden");
   showAuth(!loginVisible);
 });
 
-// Show login or register form
 function showAuth(showLogin = true) {
   document.getElementById("auth-section").classList.remove("hidden");
   document.getElementById("task-section").classList.add("hidden");
@@ -180,7 +204,7 @@ document.getElementById("logout-btn").addEventListener("click", () => {
   location.reload();
 });
 
-// Initial page load logic
+// Initial load
 if (isLoggedIn()) {
   document.getElementById("auth-section").classList.add("hidden");
   document.getElementById("task-section").classList.remove("hidden");
@@ -188,3 +212,4 @@ if (isLoggedIn()) {
 } else {
   showAuth(true);
 }
+
