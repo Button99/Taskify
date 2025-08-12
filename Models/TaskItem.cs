@@ -1,8 +1,14 @@
 namespace Taskify.Models;
 
-public enum TaskStatus { Pending, InProgress, Completed, Cancelled }
+public enum TaskStatus
+{
+    Pending,
+    InProgress,
+    Completed,
+    Cancelled,
+}
 
-public class  TaskItem
+public class TaskItem
 {
     public int Id { get; set; }
     public string Title { get; set; }

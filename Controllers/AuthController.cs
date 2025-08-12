@@ -1,18 +1,9 @@
-﻿using System;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Taskify.Data;
-using Taskify.Models;
-using Taskify.Services;
-using Taskify.DTOs;
-
 [ApiController]
 [Route("api/auth")]
-public class AuthController: ControllerBase
+public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
     private readonly TaskifyDbContext _db;
-
 
     public AuthController(AuthService authService, TaskifyDbContext db)
     {
@@ -24,16 +15,20 @@ public class AuthController: ControllerBase
     public async Task<IActionResult> Register(UserRegisterDto request)
     {
         if (await _db.Users.AnyAsync(u => u.Username == request.Username))
-                return BadRequest("Username already exists.");
+            return BadRequest("Username already exists.");
 
-        _authService.CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
+        _authService.CreatePasswordHash(
+            request.Password,
+            out byte[] passwordHash,
+            out byte[] passwordSalt
+        );
 
         var user = new User
         {
             Username = request.Username,
             PasswordHash = passwordHash,
             PasswordSalt = passwordSalt,
-            Email = request.Email
+            Email = request.Email,
         };
 
         _db.Users.Add(user);
@@ -48,10 +43,11 @@ public class AuthController: ControllerBase
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
         if (user == null)
             return Unauthorized("Invalid username or password.");
-        if (!_authService.VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
+        if (
+            !_authService.VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt)
+        )
             return Unauthorized("Invalid username or password.");
         var token = _authService.CreateToken(user);
         return Ok(new { Token = token });
     }
-
 }
