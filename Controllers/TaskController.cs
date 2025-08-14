@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.VisualBasic;
 
 namespace Taskify.Controllers;
 
@@ -27,9 +28,9 @@ public class TaskController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateTask([FromBody] TaskItem task)
+    public async Task<IActionResult> CreateTask([FromBody] TaskItemDto dto, CancellationToken ct)
     {
-        if (task == null || string.IsNullOrEmpty(task.Title))
+        if (dto == null || string.IsNullOrEmpty(dto.Title))
         {
             return BadRequest("Task cannot be null or empty.");
         }
@@ -38,14 +39,21 @@ public class TaskController : ControllerBase
         {
             return Unauthorized();
         }
-        task.UserId = int.Parse(userId);
-        await _db.Tasks.AddAsync(task);
+        dto.UserId = int.Parse(userId);
+        var taskItem = new TaskItem{
+            Title = dto.Title,
+            Description = dto.Description,
+            DueDate = dto.DueDate,
+            Status = dto.Status,
+            UserId = (int)dto.UserId
+        };
+        await _db.Tasks.AddAsync(taskItem);
         await _db.SaveChangesAsync();
         return Ok("Task created successfully.");
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskItem task)
+    public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskItemDto task)
     {
         if (task == null || string.IsNullOrEmpty(task.Title))
         {

@@ -4,6 +4,7 @@ global using System.IdentityModel.Tokens.Jwt;
 global using System.Linq;
 global using System.Security.Claims;
 global using System.Text;
+global using Newtonsoft.Json;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using Microsoft.AspNetCore.Authorization;
@@ -16,6 +17,7 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.IdentityModel.Tokens;
+
 global using Taskify.Data;
 global using Taskify.DTOs;
 global using Taskify.Models;
